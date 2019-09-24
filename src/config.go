@@ -19,6 +19,15 @@ var dbPath string
 var configPath string
 
 
+const emojiFile = "📃"
+const emojiClock = "🕐"
+const emojiBookStack = "📚"
+const emojiSadFace = "😢"
+const emojiSandClock = "⏳"
+const emojiHammer = "🔨"
+const emojiCool = "👍"
+const emojiSave = "💾"
+
 func parseConfig() {
 	usr, err := user.Current()
 	if err != nil {

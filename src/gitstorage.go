@@ -10,6 +10,7 @@ import (
 	"gopkg.in/src-d/go-git.v4/plumbing/transport"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/user"
 	"time"
@@ -89,21 +90,13 @@ func createAndPushEmptyRepo(){
 	}
 
 	_, err = w.Commit("init", &git.CommitOptions{
-		//All:       false,
 		Author:    createSignature(),
 		Committer: createSignature(),
-		//Parents:   nil,
-		//SignKey:   nil,
 	})
 
 	if err != nil {
 		fmt.Printf("Failed to commit %s\n", err)
 	}
-
-	//err = w.Checkout(&git.CheckoutOptions{Branch: "master"})
-	//if err != nil {
-	//	fmt.Printf("Failed to checkout master %s\n", err)
-	//}
 
 	err = repo.Push(&git.PushOptions{
 		RemoteName: "origin",
@@ -116,8 +109,6 @@ func createAndPushEmptyRepo(){
 }
 
 func (gs *GitStorage) initRepo() {
-	fmt.Println("init repo")
-
 	r, err := git.PlainClone(storageDir, false, &git.CloneOptions{
 		URL:  CONFIG.Main.Repo,
 		Auth: getSshKeyAuth(),
@@ -163,9 +154,17 @@ func (gs *GitStorage) push() {
 	})
 
 	if err != nil {
-		fmt.Printf("Failed to push %s\n", err)
+		fmt.Printf("%s Failed to push %s\n", emojiSave, err)
 	}
 }
+
+func isUpToDate(err error) bool {
+	if err.Error() == "already up-to-date" {
+		return true
+	}
+	return false
+}
+
 func (gs *GitStorage) pull() {
 	w, err := gs.repo.Worktree()
 	if err != nil {
@@ -177,14 +176,16 @@ func (gs *GitStorage) pull() {
 		Auth:       getSshKeyAuth(),
 		Force:      true,
 	})
-	if err != nil {
-		fmt.Printf("failed to fetch: %s\n", err)
+
+	if isUpToDate(err) == false {
+		log.Fatalf("%s Failed to fetch: %s\n", emojiSadFace, err)
 	}
 
 	remoteMaster := plumbing.NewRemoteReferenceName("origin", "master")
 	err = w.Checkout(&git.CheckoutOptions{Force: true, Branch: remoteMaster})
 	if err != nil {
-		fmt.Printf("Failed to pull: %s\n", err)
+		fmt.Printf("%s Failed to pull: %s\n", emojiSadFace, err)
 	}
-	fmt.Println("Checkout done")
+
+	fmt.Printf("%s Done\n", emojiCool)
 }
